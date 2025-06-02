@@ -1,4 +1,6 @@
 <?php
+// add_domain.php
+
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -6,14 +8,14 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 include "db.php";
-include "get_domain_expiry.php"; // API ile tarihi çekeceğiz
 
+$hata = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $domain = $_POST['domain'];
-    $expiry = getDomainExpiry($domain);
+    $domain = trim($_POST['domain_name']);
+    $expiry = $_POST['expiry_date'];
 
-    if ($expiry === null) {
-        $hata = "Alan adı bitiş tarihi alınamadı. Alan adı doğru mu?";
+    if (empty($domain) || empty($expiry)) {
+        $hata = "Alan adı ve bitiş tarihi zorunludur.";
     } else {
         $stmt = $pdo->prepare("INSERT INTO domains (user_id, domain_name, expiry_date) VALUES (?, ?, ?)");
         $stmt->execute([$_SESSION['user_id'], $domain, $expiry]);
@@ -23,10 +25,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<h2>Yeni Domain Ekle</h2>
+<h2>Yeni Alan Adı Ekle</h2>
+
 <form method="POST">
-    Domain Adı: <input type="text" name="domain" required placeholder="example.com"><br>
+    <label>Alan Adı:</label><br>
+    <input type="text" name="domain_name" placeholder="ornek.com" required><br><br>
+
+    <label>Bitiş Tarihi:</label><br>
+    <input type="date" name="expiry_date" required><br><br>
+
     <button type="submit">Kaydet</button>
 </form>
 
-<?php if (isset($hata)) echo "<p style='color:red;'>$hata</p>"; ?>
+<?php if ($hata): ?>
+    <p style="color: red;"><?= htmlspecialchars($hata) ?></p>
+<?php endif; ?>
